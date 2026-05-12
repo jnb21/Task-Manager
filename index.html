@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+        <h2 class="logo">TaskFlow</h2>
+
+        <ul class="menu">
+            <li>All Tasks</li>
+            <li>Today</li>
+            <li>Completed</li>
+            <li>Important</li>
+        </ul>
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+            <input type="text" placeholder="Search tasks...">
+            <button class="btn" id="add-task-btn">+ Add Task</button>
+        </header>
+
+        <section class="tasks" id="task-list"></section>
+
+    </main>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
