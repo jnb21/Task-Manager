@@ -86,3 +86,22 @@ body {
 .task-card h3 {
     margin-bottom: 8px;
 }
+
+.topbar input, .topbar select {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    margin-right: 10px;
+}
+
+.low {
+    border-left: 5px solid green;
+}
+
+.medium {
+    border-left: 5px solid orange;
+}
+
+.high {
+    border-left: 5px solid red;
+}

@@ -24,10 +24,20 @@
 
     <main class="main">
 
-        <header class="topbar">
-            <input type="text" placeholder="Search tasks...">
-            <button class="btn" id="add-task-btn">+ Add Task</button>
-        </header>
+<header class="topbar">
+
+    <input type="text" id="task-input" placeholder="Task name...">
+
+    <select id="priority-select">
+        <option value="Low">Low</option>
+        <option value="Medium" selected>Medium</option>
+        <option value="High">High</option>
+    </select>
+
+    <input type="text" id="task-desc" placeholder="Description (max 50 words)">
+    <button class="btn" id="add-task-btn">+ Add Task</button>
+
+</header>
 
         <section class="tasks" id="task-list"></section>
 
