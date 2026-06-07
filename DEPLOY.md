@@ -42,11 +42,12 @@ Fill in these fields on the configuration screen:
 | **Root Directory** | `server` |
 | **Runtime** | `Node` |
 | **Build Command** | `npm install` |
-| **Start Command** | `node --experimental-sqlite index.js` |
+| **Start Command** | `node index.js` |
 | **Instance Type** | `Free` (see note below about the database) |
 
-> **Node version note:** The `--experimental-sqlite` flag is required on Node 22 (which Render uses).
-> If Render upgrades to Node 23 or later, remove the flag — it becomes built-in and stable.
+> **Node version note:** This project requires Node 22.13 or later (when `node:sqlite` became stable).
+> Render uses Node 22 LTS by default, which satisfies this. If you see a sqlite error, set
+> `NODE_VERSION=22` in Render → service → Environment.
 
 ### 3. Set environment variables
 
@@ -195,4 +196,4 @@ You do **not** need a `.env` file for local development — everything uses defa
 → The free tier spins the service down after 15 minutes of inactivity. The first request after idle wakes it up. This is normal on the free plan. Upgrade to Starter to eliminate it.
 
 **`node:sqlite` error on Render**  
-→ Your Node version on Render is below 22.5. In the Render dashboard → service → Settings → scroll to "Environment" → set `NODE_VERSION` to `22`. Or confirm the start command includes `--experimental-sqlite`.
+→ Your Node version on Render is below 22.13. In the Render dashboard → service → Settings → scroll to "Environment" → set `NODE_VERSION` to `22`.
