@@ -104,6 +104,21 @@
           </div>
         </div>
         <div class="topbar-right">
+          <div class="notif-wrapper" id="notif-wrapper">
+            <button class="notif-btn" id="notif-btn" aria-label="Notifications" title="Notifications">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="17" height="17">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+              </svg>
+              <span class="notif-badge" id="notif-badge" hidden>0</span>
+            </button>
+            <div class="notif-panel" id="notif-panel">
+              <div class="notif-panel-header">
+                <span class="notif-panel-title">Reminders</span>
+                <button class="notif-enable-btn" id="notif-enable-btn">Enable alerts</button>
+              </div>
+              <div id="notif-body"></div>
+            </div>
+          </div>
           <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
             <svg class="icon-moon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
               <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>

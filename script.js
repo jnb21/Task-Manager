@@ -3,7 +3,8 @@
 // ============================================================
 // STATE
 // ============================================================
-const STORAGE_KEY = 'taskflow_v1';
+const STORAGE_KEY       = 'taskflow_v1';
+const NOTIF_SESSION_KEY = 'taskflow_notified';
 
 let tasks          = [];
 let activeCategory = 'All';
@@ -86,13 +87,11 @@ function getVisibleTasks() {
   if (activeCategory !== 'All') {
     result = result.filter(t => t.category === activeCategory);
   }
-
   if (activeFilter === 'active') {
     result = result.filter(t => !t.completed);
   } else if (activeFilter === 'completed') {
     result = result.filter(t => t.completed);
   }
-
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     result = result.filter(t =>
@@ -142,6 +141,23 @@ function isOverdue(dateStr) {
   return new Date(y, m - 1, d) < today;
 }
 
+// Returns enriched task objects with .diffDays (0 = today, <0 = overdue)
+function getNotifiableTasks() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return tasks
+    .filter(t => !t.completed && t.dueDate)
+    .map(t => {
+      const [y, m, d] = t.dueDate.split('-').map(Number);
+      const due      = new Date(y, m - 1, d);
+      const diffDays = Math.round((due - today) / 86400000);
+      return { ...t, diffDays };
+    })
+    .filter(t => t.diffDays <= 0)
+    .sort((a, b) => a.diffDays - b.diffDays);
+}
+
 // ============================================================
 // ESCAPE HELPER
 // ============================================================
@@ -157,6 +173,7 @@ function esc(str) {
 function render() {
   renderStats();
   renderTasks();
+  updateNotifBadge();
 }
 
 function renderStats() {
@@ -303,6 +320,167 @@ function saveModal() {
     addTask(data);
   }
   closeModal();
+}
+
+// ============================================================
+// NOTIFICATIONS — IN-APP
+// ============================================================
+function updateNotifBadge() {
+  const count = getNotifiableTasks().length;
+  const badge = document.getElementById('notif-badge');
+  const btn   = document.getElementById('notif-btn');
+  if (count > 0) {
+    badge.textContent = count > 9 ? '9+' : String(count);
+    badge.hidden = false;
+    btn.classList.add('has-notif');
+  } else {
+    badge.hidden = true;
+    btn.classList.remove('has-notif');
+  }
+}
+
+function renderNotifPanel() {
+  const notifiable = getNotifiableTasks();
+  const body       = document.getElementById('notif-body');
+
+  if (notifiable.length === 0) {
+    body.innerHTML = `
+      <div class="notif-empty">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="28" height="28">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <p>All caught up!</p>
+        <span>No tasks due today or overdue.</span>
+      </div>`;
+    return;
+  }
+
+  const overdue  = notifiable.filter(t => t.diffDays < 0);
+  const dueToday = notifiable.filter(t => t.diffDays === 0);
+
+  let html = '';
+  if (overdue.length) {
+    html += `<div class="notif-section-label">Overdue · ${overdue.length}</div>`;
+    html += overdue.map(notifItemHTML).join('');
+  }
+  if (dueToday.length) {
+    html += `<div class="notif-section-label">Due Today · ${dueToday.length}</div>`;
+    html += dueToday.map(notifItemHTML).join('');
+  }
+
+  body.innerHTML = html;
+}
+
+function notifItemHTML(task) {
+  const days    = Math.abs(task.diffDays);
+  const subtext = task.diffDays === 0
+    ? 'Due today'
+    : `${days} day${days !== 1 ? 's' : ''} overdue`;
+  const dotColor = task.priority === 'High' ? 'var(--high)'
+                 : task.priority === 'Medium' ? 'var(--medium)' : 'var(--low)';
+
+  return `
+    <div class="notif-item" data-id="${task.id}">
+      <div class="notif-dot" style="background:${dotColor}"></div>
+      <div class="notif-item-body">
+        <div class="notif-item-title">${esc(task.title)}</div>
+        <div class="notif-item-sub">
+          <span class="badge badge-cat" data-cat="${task.category}"
+                style="font-size:10px;padding:1px 6px">${task.category}</span>
+          <span class="notif-item-date${task.diffDays < 0 ? ' overdue' : ''}">${subtext}</span>
+        </div>
+      </div>
+      <button class="notif-done-btn" data-action="notif-done" data-id="${task.id}"
+              title="Mark as done" aria-label="Mark done">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>`;
+}
+
+function openNotifPanel() {
+  renderNotifPanel();
+  updateNotifEnableBtn();
+  const panel = document.getElementById('notif-panel');
+  panel.classList.add('open');
+}
+
+function closeNotifPanel() {
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  if (panel.classList.contains('open')) {
+    closeNotifPanel();
+  } else {
+    openNotifPanel();
+  }
+}
+
+// ============================================================
+// NOTIFICATIONS — BROWSER (OS-LEVEL)
+// ============================================================
+function getNotifiedSessionIds() {
+  try { return new Set(JSON.parse(sessionStorage.getItem(NOTIF_SESSION_KEY)) || []); }
+  catch { return new Set(); }
+}
+
+function markNotifiedSession(ids) {
+  const existing = getNotifiedSessionIds();
+  ids.forEach(id => existing.add(id));
+  sessionStorage.setItem(NOTIF_SESSION_KEY, JSON.stringify([...existing]));
+}
+
+async function requestBrowserPermission() {
+  if (!('Notification' in window)) return 'unavailable';
+  if (Notification.permission !== 'default') return Notification.permission;
+  return Notification.requestPermission();
+}
+
+function sendBrowserNotifications() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const notifiable  = getNotifiableTasks();
+  const notifiedIds = getNotifiedSessionIds();
+  const fresh       = notifiable.filter(t => !notifiedIds.has(t.id));
+
+  fresh.forEach(t => {
+    const days = Math.abs(t.diffDays);
+    const body = t.diffDays === 0
+      ? `Due today · ${t.category} · ${t.priority} priority`
+      : `${days} day${days !== 1 ? 's' : ''} overdue · ${t.category}`;
+
+    new Notification(t.title, {
+      body,
+      tag: `taskflow-${t.id}`,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%236366f1"/><path d="M9 16l5 5 9-9" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+    });
+  });
+
+  if (fresh.length) markNotifiedSession(fresh.map(t => t.id));
+}
+
+function updateNotifEnableBtn() {
+  const btn = document.getElementById('notif-enable-btn');
+  if (!('Notification' in window)) {
+    btn.hidden = true;
+    return;
+  }
+  const perm = Notification.permission;
+  if (perm === 'granted') {
+    btn.textContent = '✓ Alerts on';
+    btn.className   = 'notif-enable-btn is-on';
+    btn.disabled    = true;
+  } else if (perm === 'denied') {
+    btn.textContent = 'Alerts blocked';
+    btn.className   = 'notif-enable-btn is-blocked';
+    btn.disabled    = true;
+  } else {
+    btn.textContent = 'Enable alerts';
+    btn.className   = 'notif-enable-btn';
+    btn.disabled    = false;
+  }
 }
 
 // ============================================================
@@ -487,13 +665,44 @@ function setupEvents() {
   document.getElementById('menu-btn').addEventListener('click', openSidebar);
   document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
   document.getElementById('overlay').addEventListener('click', closeSidebar);
-
   document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+  // Notification bell
+  document.getElementById('notif-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    toggleNotifPanel();
+  });
+
+  // "Enable alerts" button inside panel
+  document.getElementById('notif-enable-btn').addEventListener('click', async () => {
+    const result = await requestBrowserPermission();
+    updateNotifEnableBtn();
+    if (result === 'granted') sendBrowserNotifications();
+  });
+
+  // "Mark done" inside notification panel
+  document.getElementById('notif-body').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="notif-done"]');
+    if (!btn) return;
+    toggleComplete(btn.dataset.id);
+    // Refresh panel content without closing it
+    renderNotifPanel();
+    updateNotifBadge();
+  });
+
+  // Close notification panel on outside click
+  document.addEventListener('click', e => {
+    if (!document.getElementById('notif-wrapper').contains(e.target)) {
+      closeNotifPanel();
+    }
+  });
 
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (document.getElementById('modal-backdrop').style.display === 'flex') {
       closeModal();
+    } else if (document.getElementById('notif-panel').classList.contains('open')) {
+      closeNotifPanel();
     } else {
       closeSidebar();
     }
@@ -525,6 +734,9 @@ function init() {
   loadSettings();
   setupEvents();
   render();
+  // Send browser notifications once on load; re-check every minute
+  sendBrowserNotifications();
+  setInterval(sendBrowserNotifications, 60_000);
 }
 
 init();
