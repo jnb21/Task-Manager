@@ -1,2 +1,24 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build output
+dist/
+
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local
+server/.env
+
+# SQLite database
+server/taskflow.db
+server/taskflow.db-shm
+server/taskflow.db-wal
+
+# macOS
 .DS_Store
-node_modules
+
+# Editor
+.vscode/
+.idea/

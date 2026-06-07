@@ -1,13 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { isOverdue } from '../utils/dates';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../utils/api';
 
-const STORAGE_KEY  = 'taskflow_v1';
 const PRIORITY_RANK = { High: 0, Medium: 1, Low: 2 };
-
-function loadFromStorage() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
-}
 
 function computeVisible(tasks, { activeCategory, activeFilter, searchQuery, sortOrder }) {
   let result = tasks.slice();
@@ -48,8 +44,9 @@ function computeVisible(tasks, { activeCategory, activeFilter, searchQuery, sort
 }
 
 export function useTasks() {
-  const [tasks, setTasks] = useState(loadFromStorage);
+  const { user } = useAuth();
 
+  const [tasks, setTasks]               = useState([]);
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeFilter,   setActiveFilter]   = useState('all');
   const [searchQuery,    setSearchQuery]    = useState('');
@@ -58,8 +55,12 @@ export function useTasks() {
   );
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-  }, [tasks]);
+    if (!user) { setTasks([]); return; }
+    apiFetch('/api/tasks')
+      .then(r => r.json())
+      .then(setTasks)
+      .catch(console.error);
+  }, [user]);
 
   useEffect(() => {
     localStorage.setItem('taskflow_sort', sortOrder);
@@ -77,7 +78,7 @@ export function useTasks() {
     overdue: tasks.filter(t => isOverdue(t.dueDate) && !t.completed).length,
   }), [tasks]);
 
-  function addTask(data) {
+  async function addTask(data) {
     const task = {
       id:          crypto.randomUUID(),
       title:       data.title.trim(),
@@ -87,39 +88,54 @@ export function useTasks() {
       dueDate:     data.dueDate    || '',
       completed:   false,
       createdAt:   new Date().toISOString(),
+      sortOrder:   0,
     };
     setTasks(prev => [task, ...prev]);
+    apiFetch('/api/tasks', { method: 'POST', body: JSON.stringify(task) })
+      .catch(console.error);
   }
 
-  function updateTask(id, data) {
-    setTasks(prev => prev.map(t =>
-      t.id === id
-        ? { ...t, title: data.title.trim(), description: (data.description || '').trim(),
-            category: data.category, priority: data.priority, dueDate: data.dueDate }
-        : t
-    ));
+  async function updateTask(id, data) {
+    const current = tasks.find(t => t.id === id);
+    if (!current) return;
+    const updated = {
+      ...current,
+      title:       data.title.trim(),
+      description: (data.description || '').trim(),
+      category:    data.category,
+      priority:    data.priority,
+      dueDate:     data.dueDate || '',
+    };
+    setTasks(prev => prev.map(t => (t.id === id ? updated : t)));
+    apiFetch(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(updated) })
+      .catch(console.error);
   }
 
   function deleteTask(id) {
     setTasks(prev => prev.filter(t => t.id !== id));
+    apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }).catch(console.error);
   }
 
   function toggleComplete(id) {
-    setTasks(prev => prev.map(t =>
-      t.id === id ? { ...t, completed: !t.completed } : t
-    ));
+    const current = tasks.find(t => t.id === id);
+    if (!current) return;
+    const updated = { ...current, completed: !current.completed };
+    setTasks(prev => prev.map(t => (t.id === id ? updated : t)));
+    apiFetch(`/api/tasks/${id}`, { method: 'PUT', body: JSON.stringify(updated) })
+      .catch(console.error);
   }
 
   function reorderTasks(fromId, toId, after) {
-    setTasks(prev => {
-      const arr      = [...prev];
-      const fromIdx  = arr.findIndex(t => t.id === fromId);
-      const [moved]  = arr.splice(fromIdx, 1);
-      const toIdx    = arr.findIndex(t => t.id === toId);
-      arr.splice(after ? toIdx + 1 : toIdx, 0, moved);
-      return arr;
-    });
+    const arr      = [...tasks];
+    const fromIdx  = arr.findIndex(t => t.id === fromId);
+    const [moved]  = arr.splice(fromIdx, 1);
+    const toIdx    = arr.findIndex(t => t.id === toId);
+    arr.splice(after ? toIdx + 1 : toIdx, 0, moved);
+    setTasks(arr);
     if (sortOrder !== 'custom') setSortOrder('custom');
+    const order = arr.map((t, i) => ({ id: t.id, sortOrder: i }));
+    apiFetch('/api/tasks/reorder', { method: 'POST', body: JSON.stringify({ order }) })
+      .catch(console.error);
   }
 
   return {

@@ -1,3 +1,5 @@
+import { useAuth } from '../context/AuthContext';
+
 const NAV_CATEGORIES = [
   {
     key: 'All',
@@ -51,6 +53,12 @@ const CloseIcon = () => (
   </svg>
 );
 
+const LogoutIcon = () => (
+  <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+    <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V5h6V4a1 1 0 00-1-1H3zm10.293 3.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L14.586 11H9a1 1 0 110-2h5.586l-1.293-1.293a1 1 0 010-1.414z" clipRule="evenodd"/>
+  </svg>
+);
+
 export default function Sidebar({
   isOpen,
   onClose,
@@ -59,8 +67,11 @@ export default function Sidebar({
   onCategoryChange,
   activeFilter,
   onFilterChange,
+  onLogout,
 }) {
+  const { user } = useAuth();
   const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+  const initials = user ? user.username.slice(0, 2).toUpperCase() : '??';
 
   return (
     <aside className={`sidebar${isOpen ? ' open' : ''}`} id="sidebar">
@@ -122,11 +133,14 @@ export default function Sidebar({
 
       <div className="sidebar-footer">
         <div className="sidebar-user">
-          <div className="user-avatar">JB</div>
+          <div className="user-avatar">{initials}</div>
           <div className="user-info">
-            <span className="user-name">Jordan Bikong</span>
-            <span className="user-role">Personal workspace</span>
+            <span className="user-name">{user?.username}</span>
+            <span className="user-role">{user?.email}</span>
           </div>
+          <button className="logout-btn" onClick={onLogout} title="Sign out">
+            <LogoutIcon />
+          </button>
         </div>
       </div>
     </aside>

@@ -2,13 +2,24 @@ import { useState } from 'react';
 import { useTasks }                  from './hooks/useTasks';
 import { useTheme }                  from './hooks/useTheme';
 import { useNotificationScheduler }  from './hooks/useNotifications';
-import Sidebar      from './components/Sidebar';
-import Topbar       from './components/Topbar';
-import MetricsGrid  from './components/MetricsGrid';
-import TaskList     from './components/TaskList';
-import Modal        from './components/Modal';
+import { useAuth }   from './context/AuthContext';
+import Sidebar       from './components/Sidebar';
+import Topbar        from './components/Topbar';
+import MetricsGrid   from './components/MetricsGrid';
+import TaskList      from './components/TaskList';
+import Modal         from './components/Modal';
+import AuthPage      from './components/AuthPage';
 
 export default function App() {
+  const { user, logout, loading } = useAuth();
+
+  if (loading) return <div className="auth-page" />;
+  if (!user)   return <AuthPage />;
+
+  return <Dashboard onLogout={logout} />;
+}
+
+function Dashboard({ onLogout }) {
   const {
     tasks, visibleTasks, stats,
     addTask, updateTask, deleteTask, toggleComplete, reorderTasks,
@@ -57,6 +68,7 @@ export default function App() {
           onCategoryChange={setActiveCategory}
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
+          onLogout={onLogout}
         />
 
         <main className="main">
