@@ -1,51 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Manager</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Task Manager</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="app">
+  <div class="overlay" id="overlay"></div>
 
-    <aside class="sidebar">
-        <h2 class="logo">TaskFlow</h2>
+  <div class="app">
 
-        <ul class="menu">
-            <li>All Tasks</li>
-            <li>Today</li>
-            <li>Completed</li>
-            <li>Important</li>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">✓</span>
+          <span class="logo-text">TaskFlow</span>
+        </div>
+        <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">✕</button>
+      </div>
+
+      <div class="sidebar-stats">
+        <div class="stat-item">
+          <span class="stat-num" id="total-count">0</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num done" id="done-count">0</span>
+          <span class="stat-label">Done</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num pending" id="pending-count">0</span>
+          <span class="stat-label">Active</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <p class="nav-label">Categories</p>
+        <ul id="category-list">
+          <li class="nav-item active" data-category="All">
+            <span class="nav-icon">📋</span> All Tasks
+          </li>
+          <li class="nav-item" data-category="Personal">
+            <span class="nav-icon">👤</span> Personal
+          </li>
+          <li class="nav-item" data-category="School">
+            <span class="nav-icon">🎓</span> School
+          </li>
+          <li class="nav-item" data-category="Work">
+            <span class="nav-icon">💼</span> Work
+          </li>
         </ul>
+
+        <p class="nav-label">Status</p>
+        <ul id="filter-list">
+          <li class="nav-item active" data-filter="all">
+            <span class="filter-dot all"></span> All
+          </li>
+          <li class="nav-item" data-filter="active">
+            <span class="filter-dot active-dot"></span> Active
+          </li>
+          <li class="nav-item" data-filter="completed">
+            <span class="filter-dot done-dot"></span> Completed
+          </li>
+        </ul>
+      </nav>
     </aside>
 
     <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="menu-btn" id="menu-btn" aria-label="Open menu">
+            <span></span><span></span><span></span>
+          </button>
+          <h2 class="page-title" id="page-title">All Tasks</h2>
+        </div>
+        <div class="topbar-right">
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search tasks..." aria-label="Search tasks">
+          </div>
+          <button class="add-btn" id="add-task-btn">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>Add Task</span>
+          </button>
+        </div>
+      </header>
 
-<header class="topbar">
+      <div class="content">
+        <div class="content-header">
+          <span class="task-count-label" id="task-count-label">0 tasks</span>
+          <select id="sort-select" aria-label="Sort tasks">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="due">By due date</option>
+            <option value="priority">By priority</option>
+          </select>
+        </div>
 
-    <input type="text" id="task-input" placeholder="Task name...">
+        <ul class="task-list" id="task-list" role="list"></ul>
 
-    <select id="priority-select">
-        <option value="Low">Low</option>
-        <option value="Medium" selected>Medium</option>
-        <option value="High">High</option>
-    </select>
-
-    <input type="text" id="task-desc" placeholder="Description (max 50 words)">
-    <button class="btn" id="add-task-btn">+ Add Task</button>
-
-</header>
-
-        <section class="tasks" id="task-list"></section>
-
+        <div class="empty-state" id="empty-state">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="10" y="14" width="60" height="52" rx="6" fill="#f3f4f6"/>
+            <rect x="10" y="14" width="60" height="52" rx="6" stroke="#e5e7eb" stroke-width="2"/>
+            <rect x="22" y="28" width="36" height="4" rx="2" fill="#d1d5db"/>
+            <rect x="22" y="38" width="28" height="4" rx="2" fill="#e5e7eb"/>
+            <rect x="22" y="48" width="20" height="4" rx="2" fill="#e5e7eb"/>
+          </svg>
+          <h3>No tasks found</h3>
+          <p id="empty-message">Add your first task to get started.</p>
+        </div>
+      </div>
     </main>
+  </div>
 
-</div>
+  <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">New Task</h3>
+        <button class="modal-close" id="modal-close" aria-label="Close dialog">✕</button>
+      </div>
 
-<script src="script.js"></script>
+      <div class="modal-body">
+        <div class="field">
+          <label for="f-title">Title <span class="required" aria-hidden="true">*</span></label>
+          <input type="text" id="f-title" placeholder="What needs to be done?" maxlength="120" autocomplete="off">
+          <span class="field-error" id="title-error" role="alert"></span>
+        </div>
 
+        <div class="field">
+          <label for="f-desc">Description</label>
+          <textarea id="f-desc" placeholder="Add some details (optional)..." rows="3" maxlength="400"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-category">Category</label>
+            <select id="f-category">
+              <option value="Personal">Personal</option>
+              <option value="School">School</option>
+              <option value="Work">Work</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-priority">Priority</label>
+            <select id="f-priority">
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-due">Due Date</label>
+          <input type="date" id="f-due">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" id="modal-cancel">Cancel</button>
+        <button class="btn-save" id="modal-save">Add Task</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
