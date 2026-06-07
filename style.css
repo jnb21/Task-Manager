@@ -458,7 +458,7 @@ ul { list-style: none; }
 }
 #search-input::placeholder { color: var(--text-muted); }
 #search-input:focus {
-  background: #fff;
+  background: var(--bg-card);
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
 }
@@ -902,7 +902,7 @@ ul { list-style: none; }
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  background: #fff;
+  background: var(--bg-card);
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
 }
@@ -1044,4 +1044,133 @@ ul { list-style: none; }
   .metric-card  { padding: 12px; gap: 10px; }
   .metric-value { font-size: 20px; }
   .metric-label { font-size: 11px; }
+}
+
+/* ============================================================
+   DARK MODE TOGGLE BUTTON
+   ============================================================ */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background var(--ease), color var(--ease), border-color var(--ease);
+}
+.theme-toggle:hover {
+  background: var(--bg-card);
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+.icon-sun  { display: none; }
+.icon-moon { display: block; }
+[data-theme="dark"] .icon-sun  { display: block; }
+[data-theme="dark"] .icon-moon { display: none; }
+
+/* ============================================================
+   DRAG AND DROP
+   ============================================================ */
+.task-card {
+  cursor: grab;
+}
+.task-card:active {
+  cursor: grabbing;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  flex-shrink: 0;
+  color: var(--border-hover);
+  opacity: 0;
+  transition: opacity var(--ease);
+  margin-top: 1px;
+  cursor: grab;
+}
+.task-card:hover .drag-handle { opacity: 1; }
+
+.task-card.dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+  box-shadow: var(--shadow-md);
+}
+
+.drop-indicator {
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin: 2px 16px;
+  pointer-events: none;
+  animation: dropPulse 0.8s ease infinite alternate;
+}
+
+@keyframes dropPulse {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+[data-theme="dark"] {
+  --bg:            #0f172a;
+  --bg-card:       #1e293b;
+  --bg-card-done:  #182032;
+  --border:        rgba(255,255,255,0.08);
+  --border-hover:  rgba(255,255,255,0.14);
+
+  --text:          #f1f5f9;
+  --text-sec:      #94a3b8;
+  --text-muted:    #64748b;
+
+  --accent-light:  rgba(99,102,241,0.2);
+
+  --low-bg:          rgba(16,185,129,0.15);
+  --medium-bg:       rgba(245,158,11,0.15);
+  --high-bg:         rgba(239,68,68,0.15);
+  --cat-personal-bg: rgba(139,92,246,0.15);
+  --cat-school-bg:   rgba(6,182,212,0.15);
+  --cat-work-bg:     rgba(99,102,241,0.15);
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .topbar {
+  background: var(--bg-card);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+[data-theme="dark"] .metric-icon {
+  background: rgba(255,255,255,0.07);
+}
+
+[data-theme="dark"] .modal-backdrop {
+  background: rgba(0,0,0,0.7);
+}
+
+[data-theme="dark"] .modal {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .add-btn {
+  box-shadow: 0 1px 3px rgba(99,102,241,0.5);
+}
+
+[data-theme="dark"] .nav-item:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .empty-icon svg rect:first-child {
+  fill: #1e293b;
 }

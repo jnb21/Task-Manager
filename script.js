@@ -5,12 +5,15 @@
 // ============================================================
 const STORAGE_KEY = 'taskflow_v1';
 
-let tasks         = [];
+let tasks          = [];
 let activeCategory = 'All';
 let activeFilter   = 'all';
 let searchQuery    = '';
 let sortOrder      = 'newest';
 let editingId      = null;
+let dragSrcId      = null;
+let dragOverId     = null;
+let dragAfter      = false;
 
 // ============================================================
 // STORAGE
@@ -99,21 +102,23 @@ function getVisibleTasks() {
     );
   }
 
-  result.sort((a, b) => {
-    switch (sortOrder) {
-      case 'oldest':
-        return new Date(a.createdAt) - new Date(b.createdAt);
-      case 'due':
-        if (!a.dueDate && !b.dueDate) return 0;
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
-        return new Date(a.dueDate) - new Date(b.dueDate);
-      case 'priority':
-        return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
-      default:
-        return new Date(b.createdAt) - new Date(a.createdAt);
-    }
-  });
+  if (sortOrder !== 'custom') {
+    result.sort((a, b) => {
+      switch (sortOrder) {
+        case 'oldest':
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'due':
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate) - new Date(b.dueDate);
+        case 'priority':
+          return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+        default:
+          return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+    });
+  }
 
   return result;
 }
@@ -170,10 +175,10 @@ function renderStats() {
 }
 
 function renderTasks() {
-  const visible  = getVisibleTasks();
-  const listEl   = document.getElementById('task-list');
-  const emptyEl  = document.getElementById('empty-state');
-  const countEl  = document.getElementById('task-count-label');
+  const visible = getVisibleTasks();
+  const listEl  = document.getElementById('task-list');
+  const emptyEl = document.getElementById('empty-state');
+  const countEl = document.getElementById('task-count-label');
 
   countEl.textContent = `${visible.length} task${visible.length !== 1 ? 's' : ''}`;
 
@@ -209,7 +214,17 @@ function taskHTML(task) {
   </svg>`;
 
   return `
-    <li class="task-card${task.completed ? ' done' : ''}${overdue ? ' overdue' : ''}" data-id="${task.id}" data-priority="${task.priority}">
+    <li class="task-card${task.completed ? ' done' : ''}${overdue ? ' overdue' : ''}"
+        draggable="true"
+        data-id="${task.id}"
+        data-priority="${task.priority}">
+      <div class="drag-handle" aria-hidden="true">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+          <circle cx="7" cy="5" r="1.4"/><circle cx="13" cy="5" r="1.4"/>
+          <circle cx="7" cy="10" r="1.4"/><circle cx="13" cy="10" r="1.4"/>
+          <circle cx="7" cy="15" r="1.4"/><circle cx="13" cy="15" r="1.4"/>
+        </svg>
+      </div>
       <div class="task-check">
         <input type="checkbox" ${task.completed ? 'checked' : ''}
           aria-label="Mark '${esc(task.title)}' complete"
@@ -242,14 +257,19 @@ function openModal(taskId = null) {
   editingId = taskId;
   const task = taskId ? tasks.find(t => t.id === taskId) : null;
 
-  document.getElementById('modal-title').textContent    = task ? 'Edit Task' : 'New Task';
-  document.getElementById('modal-save').textContent     = task ? 'Save Changes' : 'Add Task';
-  document.getElementById('f-title').value              = task ? task.title       : '';
-  document.getElementById('f-desc').value               = task ? task.description : '';
-  document.getElementById('f-category').value           = task ? task.category    : 'Personal';
-  document.getElementById('f-priority').value           = task ? task.priority    : 'Medium';
-  document.getElementById('f-due').value                = task ? task.dueDate     : '';
-  document.getElementById('title-error').textContent    = '';
+  document.getElementById('modal-title').textContent = task ? 'Edit Task' : 'New Task';
+  document.getElementById('modal-save').textContent  = task ? 'Save Changes' : 'Add Task';
+  document.getElementById('f-title').value           = task ? task.title       : '';
+  document.getElementById('f-desc').value            = task ? task.description : '';
+  document.getElementById('f-category').value        = task ? task.category    : 'Personal';
+  document.getElementById('f-priority').value        = task ? task.priority    : 'Medium';
+  document.getElementById('f-due').value             = task ? task.dueDate     : '';
+  document.getElementById('title-error').textContent = '';
+
+  const icon = document.querySelector('.modal-title-icon');
+  if (icon) icon.innerHTML = task
+    ? `<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>`
+    : `<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>`;
 
   document.getElementById('modal-backdrop').style.display = 'flex';
   document.getElementById('f-title').focus();
@@ -262,13 +282,11 @@ function closeModal() {
 
 function saveModal() {
   const title = document.getElementById('f-title').value.trim();
-
   if (!title) {
     document.getElementById('title-error').textContent = 'Title is required.';
     document.getElementById('f-title').focus();
     return;
   }
-
   document.getElementById('title-error').textContent = '';
 
   const data = {
@@ -284,8 +302,102 @@ function saveModal() {
   } else {
     addTask(data);
   }
-
   closeModal();
+}
+
+// ============================================================
+// DARK MODE
+// ============================================================
+function initTheme() {
+  if (localStorage.getItem('taskflow_theme') === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('taskflow_theme', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('taskflow_theme', 'dark');
+  }
+}
+
+// ============================================================
+// DRAG AND DROP
+// ============================================================
+function enableCustomSort() {
+  if (sortOrder === 'custom') return;
+  sortOrder = 'custom';
+  localStorage.setItem('taskflow_sort', 'custom');
+  const sel = document.getElementById('sort-select');
+  if (!sel.querySelector('[value="custom"]')) {
+    sel.insertBefore(new Option('Custom order', 'custom'), sel.firstChild);
+  }
+  sel.value = 'custom';
+}
+
+function setupDragAndDrop() {
+  const listEl = document.getElementById('task-list');
+
+  listEl.addEventListener('dragstart', e => {
+    const card = e.target.closest('[data-id]');
+    if (!card) return;
+    dragSrcId = card.dataset.id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragSrcId);
+    requestAnimationFrame(() => card.classList.add('dragging'));
+  });
+
+  listEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const card = e.target.closest('[data-id]');
+    if (!card || card.dataset.id === dragSrcId) return;
+
+    const rect  = card.getBoundingClientRect();
+    const after = e.clientY > rect.top + rect.height / 2;
+    if (card.dataset.id === dragOverId && after === dragAfter) return;
+
+    dragOverId = card.dataset.id;
+    dragAfter  = after;
+
+    document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+    const line = document.createElement('div');
+    line.className = 'drop-indicator';
+    card.insertAdjacentElement(dragAfter ? 'afterend' : 'beforebegin', line);
+  });
+
+  listEl.addEventListener('dragleave', e => {
+    if (!listEl.contains(e.relatedTarget)) {
+      document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+      dragOverId = null;
+    }
+  });
+
+  listEl.addEventListener('drop', e => {
+    e.preventDefault();
+    document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+    if (!dragSrcId || !dragOverId || dragSrcId === dragOverId) return;
+
+    const fromIdx = tasks.findIndex(t => t.id === dragSrcId);
+    const [moved] = tasks.splice(fromIdx, 1);
+    const toIdx   = tasks.findIndex(t => t.id === dragOverId);
+    tasks.splice(dragAfter ? toIdx + 1 : toIdx, 0, moved);
+
+    enableCustomSort();
+    saveTasks();
+    render();
+  });
+
+  listEl.addEventListener('dragend', () => {
+    document.querySelectorAll('.task-card.dragging').forEach(el => el.classList.remove('dragging'));
+    document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+    dragSrcId = null;
+    dragOverId = null;
+  });
 }
 
 // ============================================================
@@ -305,10 +417,8 @@ function closeSidebar() {
 // EVENTS
 // ============================================================
 function setupEvents() {
-  // Add task button
   document.getElementById('add-task-btn').addEventListener('click', () => openModal());
 
-  // Modal controls
   document.getElementById('modal-save').addEventListener('click', saveModal);
   document.getElementById('modal-cancel').addEventListener('click', closeModal);
   document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -316,18 +426,15 @@ function setupEvents() {
     if (e.target === e.currentTarget) closeModal();
   });
 
-  // Submit on Enter in title field
   document.getElementById('f-title').addEventListener('keydown', e => {
     if (e.key === 'Enter') saveModal();
   });
 
-  // Task list: delegated events (toggle, edit, delete)
   document.getElementById('task-list').addEventListener('click', e => {
     const card = e.target.closest('[data-id]');
     if (!card) return;
     const id     = card.dataset.id;
     const action = e.target.closest('[data-action]')?.dataset.action;
-
     if (action === 'toggle' || e.target.dataset.action === 'toggle') {
       toggleComplete(id);
     } else if (action === 'edit') {
@@ -337,7 +444,6 @@ function setupEvents() {
     }
   });
 
-  // Checkbox change (for keyboard interaction)
   document.getElementById('task-list').addEventListener('change', e => {
     if (e.target.type === 'checkbox') {
       const card = e.target.closest('[data-id]');
@@ -345,19 +451,17 @@ function setupEvents() {
     }
   });
 
-  // Search
   document.getElementById('search-input').addEventListener('input', e => {
     searchQuery = e.target.value.trim();
     renderTasks();
   });
 
-  // Sort
   document.getElementById('sort-select').addEventListener('change', e => {
     sortOrder = e.target.value;
+    localStorage.setItem('taskflow_sort', sortOrder);
     renderTasks();
   });
 
-  // Category filter
   document.getElementById('category-list').addEventListener('click', e => {
     const item = e.target.closest('.nav-item[data-category]');
     if (!item) return;
@@ -370,7 +474,6 @@ function setupEvents() {
     if (window.innerWidth <= 768) closeSidebar();
   });
 
-  // Status filter
   document.getElementById('filter-list').addEventListener('click', e => {
     const item = e.target.closest('.nav-item[data-filter]');
     if (!item) return;
@@ -381,12 +484,12 @@ function setupEvents() {
     if (window.innerWidth <= 768) closeSidebar();
   });
 
-  // Mobile sidebar
   document.getElementById('menu-btn').addEventListener('click', openSidebar);
   document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
   document.getElementById('overlay').addEventListener('click', closeSidebar);
 
-  // Escape key
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (document.getElementById('modal-backdrop').style.display === 'flex') {
@@ -395,13 +498,31 @@ function setupEvents() {
       closeSidebar();
     }
   });
+
+  setupDragAndDrop();
 }
 
 // ============================================================
 // INIT
 // ============================================================
+function loadSettings() {
+  const saved = localStorage.getItem('taskflow_sort');
+  if (saved) {
+    sortOrder = saved;
+    if (sortOrder === 'custom') {
+      const sel = document.getElementById('sort-select');
+      sel.insertBefore(new Option('Custom order', 'custom'), sel.firstChild);
+      sel.value = 'custom';
+    } else {
+      document.getElementById('sort-select').value = sortOrder;
+    }
+  }
+}
+
 function init() {
+  initTheme();
   loadTasks();
+  loadSettings();
   setupEvents();
   render();
 }
