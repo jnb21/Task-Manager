@@ -157,10 +157,16 @@ function render() {
 function renderStats() {
   const total   = tasks.length;
   const done    = tasks.filter(t => t.completed).length;
-  const pending = total - done;
-  document.getElementById('total-count').textContent   = total;
-  document.getElementById('done-count').textContent    = done;
-  document.getElementById('pending-count').textContent = pending;
+  const active  = total - done;
+  const overdue = tasks.filter(t => isOverdue(t.dueDate) && !t.completed).length;
+  const pct     = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById('metric-total').textContent   = total;
+  document.getElementById('metric-active').textContent  = active;
+  document.getElementById('metric-done').textContent    = done;
+  document.getElementById('metric-overdue').textContent = overdue;
+  document.getElementById('progress-fill').style.width  = pct + '%';
+  document.getElementById('progress-pct').textContent   = pct + '%';
 }
 
 function renderTasks() {
@@ -203,7 +209,7 @@ function taskHTML(task) {
   </svg>`;
 
   return `
-    <li class="task-card${task.completed ? ' done' : ''}${overdue ? ' overdue' : ''}" data-id="${task.id}">
+    <li class="task-card${task.completed ? ' done' : ''}${overdue ? ' overdue' : ''}" data-id="${task.id}" data-priority="${task.priority}">
       <div class="task-check">
         <input type="checkbox" ${task.completed ? 'checked' : ''}
           aria-label="Mark '${esc(task.title)}' complete"

@@ -15,24 +15,25 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <span class="logo-icon">✓</span>
+          <span class="logo-icon">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </span>
           <span class="logo-text">TaskFlow</span>
         </div>
-        <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">✕</button>
+        <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
       </div>
 
-      <div class="sidebar-stats">
-        <div class="stat-item">
-          <span class="stat-num" id="total-count">0</span>
-          <span class="stat-label">Total</span>
+      <div class="sidebar-progress">
+        <div class="progress-header">
+          <span class="progress-title">Overall Progress</span>
+          <span class="progress-pct" id="progress-pct">0%</span>
         </div>
-        <div class="stat-item">
-          <span class="stat-num done" id="done-count">0</span>
-          <span class="stat-label">Done</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-num pending" id="pending-count">0</span>
-          <span class="stat-label">Active</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
         </div>
       </div>
 
@@ -40,16 +41,28 @@
         <p class="nav-label">Categories</p>
         <ul id="category-list">
           <li class="nav-item active" data-category="All">
-            <span class="nav-icon">📋</span> All Tasks
+            <span class="nav-icon">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+            </span>
+            All Tasks
           </li>
           <li class="nav-item" data-category="Personal">
-            <span class="nav-icon">👤</span> Personal
+            <span class="nav-icon">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+            </span>
+            Personal
           </li>
           <li class="nav-item" data-category="School">
-            <span class="nav-icon">🎓</span> School
+            <span class="nav-icon">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/></svg>
+            </span>
+            School
           </li>
           <li class="nav-item" data-category="Work">
-            <span class="nav-icon">💼</span> Work
+            <span class="nav-icon">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd"/><path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"/></svg>
+            </span>
+            Work
           </li>
         </ul>
 
@@ -66,6 +79,16 @@
           </li>
         </ul>
       </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="user-avatar">JB</div>
+          <div class="user-info">
+            <span class="user-name">Jordan Bikong</span>
+            <span class="user-role">Personal workspace</span>
+          </div>
+        </div>
+      </div>
     </aside>
 
     <main class="main">
@@ -74,7 +97,11 @@
           <button class="menu-btn" id="menu-btn" aria-label="Open menu">
             <span></span><span></span><span></span>
           </button>
-          <h2 class="page-title" id="page-title">All Tasks</h2>
+          <div class="breadcrumb">
+            <span class="breadcrumb-root">TaskFlow</span>
+            <svg class="breadcrumb-sep" viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+            <h2 class="page-title" id="page-title">All Tasks</h2>
+          </div>
         </div>
         <div class="topbar-right">
           <div class="search-box">
@@ -84,15 +111,54 @@
             <input type="text" id="search-input" placeholder="Search tasks..." aria-label="Search tasks">
           </div>
           <button class="add-btn" id="add-task-btn">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15" aria-hidden="true">
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
             </svg>
-            <span>Add Task</span>
+            <span>New Task</span>
           </button>
         </div>
       </header>
 
       <div class="content">
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon" style="--icon-color:#6366f1;--icon-bg:#eef2ff">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="metric-total">0</span>
+              <span class="metric-label">Total Tasks</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon" style="--icon-color:#3b82f6;--icon-bg:#eff6ff">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="metric-active">0</span>
+              <span class="metric-label">In Progress</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon" style="--icon-color:#10b981;--icon-bg:#ecfdf5">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="metric-done">0</span>
+              <span class="metric-label">Completed</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon" style="--icon-color:#ef4444;--icon-bg:#fef2f2">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value" id="metric-overdue">0</span>
+              <span class="metric-label">Overdue</span>
+            </div>
+          </div>
+        </div>
+
         <div class="content-header">
           <span class="task-count-label" id="task-count-label">0 tasks</span>
           <select id="sort-select" aria-label="Sort tasks">
@@ -106,13 +172,17 @@
         <ul class="task-list" id="task-list" role="list"></ul>
 
         <div class="empty-state" id="empty-state">
-          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect x="10" y="14" width="60" height="52" rx="6" fill="#f3f4f6"/>
-            <rect x="10" y="14" width="60" height="52" rx="6" stroke="#e5e7eb" stroke-width="2"/>
-            <rect x="22" y="28" width="36" height="4" rx="2" fill="#d1d5db"/>
-            <rect x="22" y="38" width="28" height="4" rx="2" fill="#e5e7eb"/>
-            <rect x="22" y="48" width="20" height="4" rx="2" fill="#e5e7eb"/>
-          </svg>
+          <div class="empty-icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="12" width="48" height="40" rx="6" fill="#f1f5f9"/>
+              <rect x="8" y="12" width="48" height="40" rx="6" stroke="#e2e8f0" stroke-width="1.5"/>
+              <rect x="18" y="24" width="28" height="3" rx="1.5" fill="#cbd5e1"/>
+              <rect x="18" y="32" width="20" height="3" rx="1.5" fill="#e2e8f0"/>
+              <rect x="18" y="40" width="14" height="3" rx="1.5" fill="#e2e8f0"/>
+              <circle cx="50" cy="50" r="10" fill="#6366f1"/>
+              <path d="M46 50l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <h3>No tasks found</h3>
           <p id="empty-message">Add your first task to get started.</p>
         </div>
@@ -123,8 +193,15 @@
   <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modal-title">New Task</h3>
-        <button class="modal-close" id="modal-close" aria-label="Close dialog">✕</button>
+        <div class="modal-title-group">
+          <div class="modal-title-icon">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+          </div>
+          <h3 id="modal-title">New Task</h3>
+        </div>
+        <button class="modal-close" id="modal-close" aria-label="Close dialog">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        </button>
       </div>
 
       <div class="modal-body">
