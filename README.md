@@ -37,13 +37,11 @@ Browser → Vercel (React/Vite static build)
                ↓
           SQLite (libSQL)
 
-## Local Development
-
-# Install dependencies
+## Install dependencies
 npm install
 cd server && npm install && cd ..
 
-# Start both frontend and backend
+## Start both frontend and backend
 npm run dev
 
 - Frontend: http://localhost:5173
