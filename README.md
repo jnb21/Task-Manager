@@ -39,7 +39,6 @@ Browser → Vercel (React/Vite static build)
 
 ## Local Development
 
-```bash
 # Install dependencies
 npm install
 cd server && npm install && cd ..
