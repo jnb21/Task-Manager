@@ -22,3 +22,4 @@ server/taskflow.db-wal
 # Editor
 .vscode/
 .idea/
+.vercel

@@ -17,14 +17,19 @@ router.post('/register', async (req, res) => {
 
   try {
     const hash = await bcrypt.hash(password, 10);
-    const result = db
-      .prepare('INSERT INTO users (email, username, password) VALUES (?, ?, ?)')
-      .run(email.toLowerCase().trim(), username.trim(), hash);
-    const user = { id: result.lastInsertRowid, email: email.toLowerCase().trim(), username: username.trim() };
+    const result = await db.execute({
+      sql: 'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
+      args: [email.toLowerCase().trim(), username.trim(), hash],
+    });
+    const user = {
+      id: Number(result.lastInsertRowid),
+      email: email.toLowerCase().trim(),
+      username: username.trim(),
+    };
     const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token, user });
   } catch (err) {
-    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE')
+    if (err.message?.includes('UNIQUE constraint failed'))
       return res.status(409).json({ error: 'Email or username already taken' });
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -36,21 +41,39 @@ router.post('/login', async (req, res) => {
   if (!email || !password)
     return res.status(400).json({ error: 'Email and password are required' });
 
-  const row = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase().trim());
-  if (!row) return res.status(401).json({ error: 'Invalid email or password' });
+  try {
+    const result = await db.execute({
+      sql: 'SELECT * FROM users WHERE email = ?',
+      args: [email.toLowerCase().trim()],
+    });
+    const row = result.rows[0];
+    if (!row) return res.status(401).json({ error: 'Invalid email or password' });
 
-  const match = await bcrypt.compare(password, row.password);
-  if (!match) return res.status(401).json({ error: 'Invalid email or password' });
+    const match = await bcrypt.compare(password, String(row.password));
+    if (!match) return res.status(401).json({ error: 'Invalid email or password' });
 
-  const user = { id: row.id, email: row.email, username: row.username };
-  const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user });
+    const user = { id: Number(row.id), email: row.email, username: row.username };
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-router.get('/me', requireAuth, (req, res) => {
-  const row = db.prepare('SELECT id, email, username FROM users WHERE id = ?').get(req.user.id);
-  if (!row) return res.status(404).json({ error: 'User not found' });
-  res.json({ user: row });
+router.get('/me', requireAuth, async (req, res) => {
+  try {
+    const result = await db.execute({
+      sql: 'SELECT id, email, username FROM users WHERE id = ?',
+      args: [req.user.id],
+    });
+    const row = result.rows[0];
+    if (!row) return res.status(404).json({ error: 'User not found' });
+    res.json({ user: { id: Number(row.id), email: row.email, username: row.username } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 module.exports = router;

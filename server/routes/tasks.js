@@ -13,65 +13,94 @@ function toTask(row) {
     category:    row.category,
     priority:    row.priority,
     dueDate:     row.due_date,
-    completed:   row.completed === 1,
+    completed:   row.completed === 1 || row.completed === true,
     createdAt:   row.created_at,
-    sortOrder:   row.sort_order,
+    sortOrder:   Number(row.sort_order),
   };
 }
 
-router.get('/', (req, res) => {
-  const rows = db
-    .prepare('SELECT * FROM tasks WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC')
-    .all(req.user.id);
-  res.json(rows.map(toTask));
+router.get('/', async (req, res) => {
+  try {
+    const result = await db.execute({
+      sql: 'SELECT * FROM tasks WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC',
+      args: [req.user.id],
+    });
+    res.json(result.rows.map(toTask));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-router.post('/reorder', (req, res) => {
+router.post('/reorder', async (req, res) => {
   const { order } = req.body;
   if (!Array.isArray(order)) return res.status(400).json({ error: 'order must be an array' });
-  const stmt = db.prepare('UPDATE tasks SET sort_order = ? WHERE id = ? AND user_id = ?');
-  db.exec('BEGIN');
   try {
-    for (const item of order) stmt.run(item.sortOrder, item.id, req.user.id);
-    db.exec('COMMIT');
+    await db.batch(
+      order.map(item => ({
+        sql: 'UPDATE tasks SET sort_order = ? WHERE id = ? AND user_id = ?',
+        args: [item.sortOrder, item.id, req.user.id],
+      })),
+      'write'
+    );
+    res.json({ ok: true });
   } catch (err) {
-    db.exec('ROLLBACK');
-    return res.status(500).json({ error: 'Reorder failed' });
+    console.error(err);
+    res.status(500).json({ error: 'Reorder failed' });
   }
-  res.json({ ok: true });
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { id, title, description, category, priority, dueDate, completed, createdAt, sortOrder } = req.body;
   if (!id || !title) return res.status(400).json({ error: 'id and title are required' });
-  db.prepare(`
-    INSERT INTO tasks (id, user_id, title, description, category, priority, due_date, completed, created_at, sort_order)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    id, req.user.id, title, description || '', category || 'Personal',
-    priority || 'Medium', dueDate || '', completed ? 1 : 0,
-    createdAt || new Date().toISOString(), sortOrder ?? 0
-  );
-  res.status(201).json({ ok: true });
+  try {
+    await db.execute({
+      sql: `INSERT INTO tasks (id, user_id, title, description, category, priority, due_date, completed, created_at, sort_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        id, req.user.id, title, description || '', category || 'Personal',
+        priority || 'Medium', dueDate || '', completed ? 1 : 0,
+        createdAt || new Date().toISOString(), sortOrder ?? 0,
+      ],
+    });
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const { title, description, category, priority, dueDate, completed, sortOrder } = req.body;
-  const result = db.prepare(`
-    UPDATE tasks
-    SET title = ?, description = ?, category = ?, priority = ?, due_date = ?, completed = ?, sort_order = ?
-    WHERE id = ? AND user_id = ?
-  `).run(
-    title, description || '', category, priority, dueDate || '',
-    completed ? 1 : 0, sortOrder ?? 0, req.params.id, req.user.id
-  );
-  if (result.changes === 0) return res.status(404).json({ error: 'Task not found' });
-  res.json({ ok: true });
+  try {
+    const result = await db.execute({
+      sql: `UPDATE tasks
+            SET title = ?, description = ?, category = ?, priority = ?, due_date = ?, completed = ?, sort_order = ?
+            WHERE id = ? AND user_id = ?`,
+      args: [
+        title, description || '', category, priority, dueDate || '',
+        completed ? 1 : 0, sortOrder ?? 0, req.params.id, req.user.id,
+      ],
+    });
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Task not found' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-router.delete('/:id', (req, res) => {
-  db.prepare('DELETE FROM tasks WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
-  res.json({ ok: true });
+router.delete('/:id', async (req, res) => {
+  try {
+    await db.execute({
+      sql: 'DELETE FROM tasks WHERE id = ? AND user_id = ?',
+      args: [req.params.id, req.user.id],
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 module.exports = router;
