@@ -1,6 +1,7 @@
 const db = require('./db');
 
 async function migrate() {
+  // CREATE TABLE IF NOT EXISTS is idempotent — safe to run on every startup
   await db.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,4 +28,8 @@ async function migrate() {
   console.log('Migration complete');
 }
 
-migrate().catch(console.error).finally(() => process.exit());
+module.exports = { migrate };
+
+if (require.main === module) {
+  migrate().catch(console.error).finally(() => process.exit());
+}

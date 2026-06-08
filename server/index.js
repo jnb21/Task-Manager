@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { migrate } = require('./migrate');
 
 const app = express();
 
@@ -15,7 +16,12 @@ app.use('/api/tasks', require('./routes/tasks'));
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  migrate().then(() => {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  }).catch(err => {
+    console.error('Migration failed:', err);
+    process.exit(1);
+  });
 }
 
 module.exports = app;
